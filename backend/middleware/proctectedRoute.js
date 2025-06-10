@@ -12,7 +12,7 @@ export const protectedRoute = (req, res, next)=>{
         console.log(decoded);
    
         req.userId = decoded.userId;
-        console.log(req);
+        
         next();
     }catch(error){
         console.error(error);

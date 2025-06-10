@@ -22,15 +22,15 @@ const plantSchema = new mongoose.Schema(
 
     reminderEnabled: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     reminderTime: {
-      type: String,
-      default: "10:00",
+      type: Date,
+      default: new Date(),
     },
     nextWateringDate: {
       type: Date,
-      default: null,
+      default: Date.now() + 3,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

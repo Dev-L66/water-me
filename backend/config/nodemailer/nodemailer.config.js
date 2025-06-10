@@ -58,3 +58,18 @@ export const sendResetPasswordSuccessMail = async (email)=>{
     console.log(`Error sending reset password successful mail: ${error}`);
   }
 }
+
+export const sendReminderMail = async (email, name)=>{
+     try {
+    const info = await transporter.sendMail({
+      from: process.env.MAIL_ID,
+      to: email,
+      subject: `Reminder to water your ${name}.`,
+      text: `Hello, Reminder to water: ${name}.`,
+    });
+console.log(info);
+    console.log(`Reminder mail sent successfully. ${info.messageId}.`);
+  } catch (error) {
+    console.log(`Error sending Reminder mail: ${error}`);
+  }
+}
