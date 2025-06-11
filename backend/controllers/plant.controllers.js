@@ -171,6 +171,7 @@ export const deletePlant = async (req, res) => {
     return res.status(500).json({ error: "Internal Server Error." });
   }
 };
+
 //confirm watering
 export const confirmWatering = async (req, res) => {
   try {
@@ -202,10 +203,10 @@ export const confirmWatering = async (req, res) => {
   }
 };
 
+
 //schedule reminders
 cron.schedule("* * * * *", async () => {
   const now = new Date();
-  console.log(now);
   try {
     const plantsToRemind = await Plant.find({
       reminderEnabled: true,
