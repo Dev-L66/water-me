@@ -1,8 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Black+Ops+One&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Caveat+Brush&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Edu+NSW+ACT+Hand+Pre:wght@400..700&display=swap');
 @import "tailwindcss";
 
 @theme{
     --font-black-ops-one: "Black Ops One", system-ui;
     --font-caveat-brush: "Caveat Brush", system-ui;
+    --font-edu-nsw-act-hand-pre: "Edu NSW ACT Hand Pre", system-ui;
+    --font-roboto: "Roboto", system-ui;
 }

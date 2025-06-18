@@ -6,11 +6,13 @@ import {
   sendWelcomeMail,
 } from "../config/nodemailer/nodemailer.config.js";
 import { generateAndSetCookie } from "../utils/lib/generateAndSetCookie.js";
+import { z } from "zod/v4";
+import { signupValdation } from "../utils/lib/inputValidation/inputValidation.js";
 
 //signup
 export const signupController = async (req, res) => {
   try {
-    const { name, username, email, password } = req.body;
+    const { name, username, email, password } = signupValdation.parse(req.body);
     if (!name || !username || !email || !password) {
       return res.status(400).json({ error: "All fields arer required!" });
     }
@@ -47,6 +49,9 @@ export const signupController = async (req, res) => {
       password: undefined,
     });
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.issues[0].message });
+    }
     console.error(`Error in signupController ${error}`);
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -63,11 +68,11 @@ export const verifyEmail = async (req, res) => {
       "verificationToken.token": code,
       "verificationToken.expiresAt": { $gt: Date.now() },
     });
-  
+
     if (!user) {
       return res.status(400).json({ error: "Invalid code or expired code." });
     }
-      if(user.isVerified){
+    if (user.isVerified) {
       return res.status(400).json({ error: "Email already verified." });
     }
 
@@ -92,7 +97,6 @@ export const verifyEmail = async (req, res) => {
 export const loginController = async (req, res) => {
   try {
     const { username, password } = req.body;
-   
 
     const existingUsername = await User.findOne({ username });
     if (!existingUsername) {
@@ -158,7 +162,11 @@ export const resetPasswordController = async (req, res) => {
     await sendResetPasswordMail(user.email, forgotPasswordCode);
     return res
       .status(200)
-      .json({ message: "Password reset code sent successfully.", ...user.doc, password: undefined });
+      .json({
+        message: "Password reset code sent successfully.",
+        ...user.doc,
+        password: undefined,
+      });
   } catch (error) {
     console.log(`Error in resetPasswordController ${error}`);
     return res.status(500).json({ error: "Internal server error" });
@@ -172,7 +180,7 @@ export const verifyResetPasswordController = async (req, res) => {
     if (!code) {
       return res.status(404).json({ error: "Reset password code required!" });
     }
- 
+
     const user = await User.findOne({
       "forgotPasswordToken.token": code,
       "forgotPasswordToken.expiresAt": { $gt: Date.now() },
@@ -200,16 +208,22 @@ export const verifyResetPasswordController = async (req, res) => {
 
 //checkAuth - getME
 
-export const checkAuth = async (req, res)=>{
-  try{
-const user = await User.findOne(req.userId);
-if(!user){
-  return res.status(404).json({error: "User not found."});
-}
-return res.status(200).json({message: "User found successfully.", ...user.doc, password: undefined});
-  }catch(error){
+export const checkAuth = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const user = await User.findOne({_id: userId}).select("-password");
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+    return res
+      .status(200)
+      .json({
+        message: "User found successfully.",
+        ...user.doc,
+        password: undefined,
+      });
+  } catch (error) {
     console.error(`Error in getMe ${error}`);
     return res.status(500).json({ error: "Internal server error" });
   }
-  
-}
+};

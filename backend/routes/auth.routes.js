@@ -1,11 +1,10 @@
 import express from "express";
-import { checkAuth, hello, loginController, logoutController, resetPasswordController, signupController, verifyEmail, verifyResetPasswordController } from "../controllers/auth.controllers.js";
+import { checkAuth, loginController, logoutController, resetPasswordController, signupController, verifyEmail, verifyResetPasswordController } from "../controllers/auth.controllers.js";
 import { protectedRoute } from "../middleware/proctectedRoute.js";
 
 const router = express.Router();
 
-router.get("/check-auth", protectedRoute, checkAuth);
-router.get('/hello', protectedRoute,hello);
+router.get('/me',protectedRoute, checkAuth);
 router.post('/signup', signupController);
 router.post('/verify-email', verifyEmail);
 router.post('/login', loginController);

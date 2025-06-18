@@ -1,27 +1,25 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
-const SignupPage = () => {
+const LoginPage = () => {
   const [formData, setFormData] = useState({
-    name: "",
     username: "",
-    email: "",
     password: "",
   });
-
+   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { mutate, data, error, isError, isPending } = useMutation({
-    mutationFn: async ({ name, username, email, password }) => {
+  const { mutate, error, isError, isPending } = useMutation({
+    mutationFn: async ({username, password }) => {
       try {
-        const res = await fetch("/api/auth/signup", {
+        const res = await fetch('/api/auth/login', {
           method: "POST",
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name, username, email, password }),
+          body: JSON.stringify({ username, password }),
         });
 
         const data = await res.json();
@@ -35,10 +33,13 @@ const SignupPage = () => {
       }
     },
     onSuccess: () => {
-      toast.success("Signup successful.");
+      toast.success("Logged in successfully.");
+      navigate('/');
+       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: () => {
-      toast.error(`Signup failed.`);
+      toast.error(`Login failed.`);
+       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
   });
   const handleFormSubmit = (e) => {
@@ -52,7 +53,7 @@ const SignupPage = () => {
   };
   return (
     <>
-      <main className="flex gap-2  min-h-screen overflow-hidden">
+      <main className="flex gap-2   min-h-screen overflow-hidden">
         <motion.figure
           initial={{ opacity: 0, x: -100 }}
           animate={{ opacity: 1, x: 0 }}
@@ -68,7 +69,7 @@ const SignupPage = () => {
             />
           </div>
         </motion.figure>
-        <form className="w-[100%] md:w-[40%]" onSubmit={handleFormSubmit}>
+        <form className="w-[100%] md:w-[40%] container mx-auto p-2" onSubmit={handleFormSubmit}>
           <div className="flex bg-transparent p-5">
             <motion.h1
               initial={{ opacity: 0, x: -100 }}
@@ -85,24 +86,12 @@ const SignupPage = () => {
             transition={{ duration: 1.25, ease: "easeInOut" }}
             className="bg-transparent font-caveat-brush flex flex-col justify-center items-center gap-2 p-2 text-lg "
           >
-            <div className="flex flex-col justify-between items-center gap-2 ">
-              <label htmlFor="name">Name:</label>
-              <input
-                className="bg-transparent focus:outline-none "
-                placeholder="Enter your name here."
-                type="text"
-                name="name"
-                id="name"
-                required
-                value={formData.name}
-                onChange={handleInputChange}
-              />
-            </div>
+            
 
             <div className="flex flex-col justify-between items-center gap-2 ">
               <label htmlFor="username">Username:</label>
               <input
-                className="bg-transparent focus:outline-none"
+                className="bg-transparent focus:outline-none "
                 placeholder="Enter your username here."
                 type="text"
                 name="username"
@@ -113,23 +102,12 @@ const SignupPage = () => {
               />
             </div>
 
-            <div className="flex flex-col justify-between items-center gap-2">
-              <label htmlFor="email">email:</label>
-              <input
-                className="bg-transparent focus:outline-none w-full"
-                placeholder="Enter your email here."
-                type="email"
-                name="email"
-                id="email"
-                value={formData.email}
-                onChange={handleInputChange}
-              />
-            </div>
+            
 
             <div className="flex flex-col justify-between items-center gap-2">
               <label htmlFor="password">Password:</label>
               <input
-                className="bg-transparent focus:outline-none w-full"
+                className="bg-transparent focus:outline-none w-full "
                 placeholder="Enter your password here."
                 type="password"
                 name="password"
@@ -175,4 +153,4 @@ const SignupPage = () => {
   );
 };
 
-export default SignupPage;
+export default LoginPage;

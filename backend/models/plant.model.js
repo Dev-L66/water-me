@@ -12,7 +12,7 @@ const plantSchema = new mongoose.Schema(
     },
     lastWateredAt: {
       type: Date,
-      default: null,
+      default: new Date().toDateString(),
     },
 
     waterFrequency: {
@@ -30,12 +30,20 @@ const plantSchema = new mongoose.Schema(
     },
     nextWateringDate: {
       type: Date,
-      default: Date.now() + 3,
+      default: function () {
+        const lastWatered = this.lastWateredAt || new Date();
+        return new Date(
+          lastWatered.getTime() + this.waterFrequency * 24 * 60 * 60 * 1000
+        );
+      },
+    },
+    watered:{
+      type: Boolean,
+      default: false
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "user",
-     
     },
   },
   { timestamps: true, strict: true }

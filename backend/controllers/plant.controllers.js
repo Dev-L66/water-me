@@ -13,9 +13,8 @@ export const createPlant = async (req, res) => {
       waterFrequency,
       reminderEnabled,
       reminderTime,
-      nextWateringDate,
     } = req.body;
-    let { image } = req.body;
+    let { image, nextWateringDate } = req.body;
     const userId = req.userId;
     const user = await User.findById(userId).select("-password");
     if (!user) {
@@ -34,6 +33,8 @@ export const createPlant = async (req, res) => {
         return res.status(500).json({ error: "Internal Server Error." });
       }
     }
+
+   
     const newPlant = await Plant.create({
       name,
       image,
@@ -184,11 +185,14 @@ export const confirmWatering = async (req, res) => {
         .status(404)
         .json({ error: "Plant not found or unauthorized, access denied." });
     }
+    
     const newReminderTime = new Date();
     newReminderTime.setDate(newReminderTime.getDate() + plant.waterFrequency);
     const updatePlant = await Plant.findByIdAndUpdate(plantId, {
       lastWateredAt: new Date(),
       reminderTime: newReminderTime,
+      nextWateringDate: newReminderTime,
+      watered: true,
     });
 
     if (!updatePlant) {
@@ -227,7 +231,7 @@ cron.schedule("* * * * *", async () => {
         console.log(newReminderTime);
         await Plant.findByIdAndUpdate(plant._id, {
           reminderTime: newReminderTime,
-          // lastWateredAt: now,
+          watered: false,
         });
       } catch (error) {
         console.log(`Error in sending reminder:${error}`);
