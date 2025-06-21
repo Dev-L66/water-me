@@ -12,7 +12,7 @@ const plantSchema = new mongoose.Schema(
     },
     lastWateredAt: {
       type: Date,
-      default: new Date().toDateString(),
+      default: () => new Date(),
     },
 
     waterFrequency: {
@@ -30,12 +30,7 @@ const plantSchema = new mongoose.Schema(
     },
     nextWateringDate: {
       type: Date,
-      default: function () {
-        const lastWatered = this.lastWateredAt || new Date();
-        return new Date(
-          lastWatered.getTime() + this.waterFrequency * 24 * 60 * 60 * 1000
-        );
-      },
+    
     },
     watered:{
       type: Boolean,
@@ -48,5 +43,17 @@ const plantSchema = new mongoose.Schema(
   },
   { timestamps: true, strict: true }
 );
+
+plantSchema.pre("save", function (next) {
+  if (!this.nextWateringDate) {
+    const lastWatered = this.lastWateredAt || new Date();
+    const frequency = this.waterFrequency || 0;
+    this.nextWateringDate = new Date(
+      lastWatered.getTime() + frequency * 24 * 60 * 60 * 1000
+    );
+  }
+  next();
+});
+
 
 export const Plant = mongoose.model("plant", plantSchema);

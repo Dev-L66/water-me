@@ -4,6 +4,8 @@ import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router";
 import { useQuery} from "@tanstack/react-query";
 import HomePage from "./pages/HomePage";
+import Navbar from "./components/common/Navbar";
+import CreatePlant from "./pages/CreatePlant";
 
 const App = () => {
 
@@ -36,14 +38,18 @@ const App = () => {
   }
  
   return (
-    <div className="container mx-auto p-5">
+    <>
+    {authUser && <Navbar/>}
+    <div className="mx-auto "> 
         <Routes>
           <Route path="/" element={authUser ? <HomePage /> : <Navigate to='/login'/>  } />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/create-plant" element={authUser ? <CreatePlant /> : <Navigate to="/login" />} />
         </Routes>
       <Toaster />
     </div>
+    </>
   );
 };
 

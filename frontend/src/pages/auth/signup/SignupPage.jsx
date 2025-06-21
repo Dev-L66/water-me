@@ -57,7 +57,7 @@ const SignupPage = () => {
           initial={{ opacity: 0, x: -100 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.5, ease: "linear" }}
-          className="w-[40%] h-screen md:block hidden  relative"
+          className="w-[30%] h-screen md:block hidden  relative"
         >
           <div>
             <img
@@ -68,13 +68,14 @@ const SignupPage = () => {
             />
           </div>
         </motion.figure>
-        <form className="w-[100%] md:w-[40%] container mx-auto p-2" onSubmit={handleFormSubmit}>
-          <div className="flex bg-transparent p-5">
+       
+        <form className="w-[100%] md:w-[50%] container mx-auto p-2" onSubmit={handleFormSubmit}>
+           <div className="flex bg-transparent p-5">
             <motion.h1
               initial={{ opacity: 0, x: -100 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1.25, ease: "easeInOut" }}
-              className="text-6xl font-bold font-black-ops-one text-center"
+              className="text-5xl font-bold font-black-ops-one flex justify-center items-center p-2"
             >
               Water Your Plants.
             </motion.h1>
@@ -159,7 +160,7 @@ const SignupPage = () => {
           initial={{ opacity: 0, x: 100 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 1.5, ease: "linear" }}
-          className="w-[40%] h-screen md:block hidden relative transform rotate-180 "
+          className="w-[30%] h-screen md:block hidden relative transform rotate-180 "
         >
           <div>
             <img

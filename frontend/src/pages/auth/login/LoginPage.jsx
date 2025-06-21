@@ -69,13 +69,13 @@ const LoginPage = () => {
             />
           </div>
         </motion.figure>
-        <form className="w-[100%] md:w-[40%] container mx-auto p-2" onSubmit={handleFormSubmit}>
+        <form className="w-[100%] md:w-[40%] container mx-auto p-2 h-screen flex flex-col justify-center items-center" onSubmit={handleFormSubmit}>
           <div className="flex bg-transparent p-5">
             <motion.h1
               initial={{ opacity: 0, x: -100 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1.25, ease: "easeInOut" }}
-              className="text-6xl font-bold font-black-ops-one text-center"
+              className="text-5xl md-text-6xl font-bold font-black-ops-one flex justify-center items-center"
             >
               Water Your Plants.
             </motion.h1>
@@ -117,7 +117,7 @@ const LoginPage = () => {
                 onChange={handleInputChange}
               />
             </div>
-            <div className="flex flex-col justify-between items-center gap-2">
+            <div className="flex flex-col items-center gap-2">
               <Link to="/login">Already have an account? Login.</Link>
               <button
                 disabled={isPending}

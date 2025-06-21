@@ -20,7 +20,7 @@ export const createPlant = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
-    if (!name || !image) {
+    if (!name ) {
       return res.status(400).json({ error: "All fields are required." });
     }
 

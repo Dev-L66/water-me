@@ -33,43 +33,47 @@ const HomePage = () => {
       queryClient.setQueryData(["allPlants"], (oldData) => {
         if (!oldData) return { plants: [data.newPlant] };
         return {
-          ...oldData,
+           ...oldData,
           plants: [data.newPlant, ...oldData.plants],
+         
         };
       });
     },
   });
-  const {mutate:waterPlant, isError: mutationIsError, error: mutationError, isPending} = useMutation({
-    mutationFn: async (plantId)=>{
-      try{
-        const res = await fetch(`/api/plant/water/${plantId}`,{
+  const {
+    mutate: waterPlant,
+    isError: mutationIsError,
+    error: mutationError,
+    isPending,
+  } = useMutation({
+    mutationFn: async (plantId) => {
+      try {
+        const res = await fetch(`/api/plant/water/${plantId}`, {
           method: "GET",
-          credentials:'include'
+          credentials: "include",
         });
-console.log(res);
-        const data =  await res.json();
+        console.log(res);
+        const data = await res.json();
         console.log(data);
-        if(!res.ok){
+        if (!res.ok) {
           throw new Error(data.error || "Something went wrong!");
         }
         return data;
-
-      }catch(error){
+      } catch (error) {
         console.error(error);
         throw error;
       }
     },
-    onSuccess:()=>{
+    onSuccess: () => {
       toast.success("Plant watered");
-    
-    }
-  })
+    },
+  });
 
-  const handleWater = (plantId)=>{
+  const handleWater = (plantId) => {
     console.log(plantId);
     console.log("waterPlant");
     waterPlant(plantId);
-  }
+  };
 
   const [countDown, setCountDown] = useState({});
   useEffect(() => {
@@ -111,51 +115,65 @@ console.log(res);
       {!allPlants || allPlants.length === 0 ? (
         <p>No plants found</p>
       ) : (
-        <div className="flex justify-center  items-center font-roboto text-md flex-wrap container mx-auto gap-5">
+        <div className="flex justify-center  items-center font-caveat-brush text-md flex-wrap container mx-auto gap-5">
           {allPlants.plants?.map((plant) => (
             <motion.div
               initial={{ opacity: 0, x: -100 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 1.25, ease: "easeInOut" }}
-              className="flex shadow-lg shadow-green-900 bg-green-300 justiyfy-center items-center gap-2 rounded-2xl"
+              className="flex shadow-lg shadow-green-900 bg-green-300 font-roboto justiyfy-center items-center gap-2 rounded-2xl"
               key={plant._id}
             >
-              <div className="flex flex-col justify-center items-center gap-2 w-80 p-3 overflow-hidden ">
+              <div className="flex flex-col justify-center items-center gap-2 w-80 p-2 overflow-hidden ">
                 <img
                   src={plant?.image}
                   alt={plant?.name}
-                  className="w-40 h-40 object-cover rounded-2xl "
+                  className="w-full h-40 object-cover rounded-2xl "
                 />
-                <p className=" text-3xl font-caveat-brush ">
+                <p className=" text-3xl font-bold ">
                   {plant?.name.toUpperCase()}
                 </p>
                 <p>
                   Last Watered At:{" "}
                   <span className="font-bold">
-                    {new Date(plant?.lastWateredAt).toLocaleDateString()}
+                    {plant?.lastWateredAt
+                      ? new Date(plant?.lastWateredAt).toLocaleDateString()
+                      : new Date().toLocaleString().split(",")[0]}
                   </span>
                 </p>
                 <div className="flex flex-col justify-center items-center">
-                  <p>
-                    Next Watering Date: <span className="font-bold">
+                  {/* <p>
+                    Next Watering Date:{" "}
+                    <span className="font-bold">
                        {plant?.nextWateringDate
-                        ? new Date(plant.nextWateringDate).toLocaleDateString()
-                        : "Not Set"}
+      ? new Date(plant.nextWateringDate).toLocaleDateString() 
+      : "Not set"}
                     </span>
-                  </p>
+                  </p> */}
                   <p>Time for next watering: </p>
                   <span className="font-bold text-2xl">
                     {plant?.nextWateringDate ? countDown[plant._id] : "Not Set"}
                   </span>
                 </div>
-                <p>
+                {/* <p>
                   Water Frequency:{" "}
                   <span className="font-bold">
                     {plant?.waterFrequency ? plant?.waterFrequency : "Not Set"}
                   </span>
+                </p> */}
+                <p>
+                  Water Status:{" "}
+                  <span className="font-bold">
+                    {plant?.watered === false &&
+                    plant?.nextWateringDate <= new Date()
+                      ? "Due"
+                      : "Watered"}
+                  </span>
                 </p>
-                <p>Water Status: <span className="font-bold">{plant?.watered === false && plant?.nextWateringDate <= new Date() ? "Due" : "Watered"}</span></p>
-              <button onClick={()=> handleWater(plant._id)} className="bg-green-900 rounded-2xl p-2 cursor-pointer text-green-200">
+                <button
+                  onClick={() => handleWater(plant._id)}
+                  className="bg-green-900 rounded-2xl p-2 cursor-pointer text-green-200"
+                >
                   Water Now
                 </button>
               </div>
