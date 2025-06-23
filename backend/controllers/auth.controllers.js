@@ -13,19 +13,31 @@ import { signupValdation } from "../utils/lib/inputValidation/inputValidation.js
 export const signupController = async (req, res) => {
   try {
     const { name, username, email, password } = signupValdation.parse(req.body);
+
     if (!name || !username || !email || !password) {
       return res.status(400).json({ error: "All fields arer required!" });
     }
 
-    const existingMail = await User.findOne({ email });
-    if (existingMail) {
-      return res.status(400).json({ error: "email already exists!" });
-    }
+     const [existingMail, existingUsername] = await Promise.all([
+      User.findOne({ email }),
+      User.findOne({ username }),
+    ]);
 
-    const existingUsername = await User.findOne({ username });
+    if (existingMail) {
+      return res.status(400).json({ error: "Email already exists!" });
+    }
     if (existingUsername) {
       return res.status(400).json({ error: "Username already exists!" });
     }
+    // const existingMail = await User.findOne({ email });
+    // if (existingMail) {
+    //   return res.status(400).json({ error: "email already exists!" });
+    // }
+
+    // const existingUsername = await User.findOne({ username });
+    // if (existingUsername) {
+    //   return res.status(400).json({ error: "Username already exists!" });
+    // }
 
     const hashedPassword = await bcryptjs.hash(password, 10);
     const verificationToken = Math.floor(Math.random() * 100000) + 1;
@@ -50,7 +62,7 @@ export const signupController = async (req, res) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: error.issues[0].message });
+      return res.status(400).json({ error: error.issues.map((issue) => issue.message) });
     }
     console.error(`Error in signupController ${error}`);
     return res.status(500).json({ error: "Internal server error" });

@@ -3,7 +3,7 @@ import LoginPage from "./pages/auth/login/LoginPage";
 import { Toaster } from "react-hot-toast";
 import { Navigate, Route, Routes } from "react-router";
 import { useQuery} from "@tanstack/react-query";
-import HomePage from "./pages/HomePage";
+import HomePage from "./pages/HomePage.jsx";
 import Navbar from "./components/common/Navbar";
 import CreatePlant from "./pages/CreatePlant";
 import EditPlant from "./pages/EditPlant";
@@ -43,7 +43,7 @@ const App = () => {
     {authUser && <Navbar/>}
     <div className="mx-auto "> 
         <Routes>
-          <Route path="/" element={authUser ? <HomePage /> : <Navigate to='/login'/>  } />
+          <Route path="/" element={authUser ? <HomePage/> : <Navigate to='/login'/>  } />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/create-plant" element={authUser ? <CreatePlant /> : <Navigate to="/login" />} />
