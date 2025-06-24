@@ -1,18 +1,65 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { useNavigate } from "react-router";
-import {motion} from "motion/react";
-const CreatePlant = () => {
+import { useNavigate, useParams } from "react-router";
+const EditPlant = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { plantId } = useParams();
+  const {
+    data: allPlants,
+    isError,
+    error,
+    isLoading,
+  } = useQuery({
+    queryKey: ["allPlants"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/plant/all-plants", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong!");
+        }
+        return data;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["allPlants"], (oldData) => {
+        if (!oldData) return { plants: [data.newPlant] };
+        return {
+          ...oldData,
+          plants: [data.newPlant, ...oldData.plants],
+        };
+      });
+    },
+    retry: false,
+  });
+  const plant = allPlants?.plants?.find((plant) => plant._id === plantId);
   const [name, setName] = useState("");
   const [image, setImage] = useState("");
   const [lastWateredAt, setLastWateredAt] = useState("");
   const [waterFrequency, setWaterFrequency] = useState(3);
-  const [reminderEnabled, setReminderEnabled] = useState(true);
+  const [reminderEnabled, setReminderEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState("");
-  // const [nextWateringDate, setNextWateringDate] = useState("");
+  const [nextWateringDate, setNextWateringDate] = useState("");
+
+  useEffect(() => {
+    if (plant) {
+      setName(plant.name || "");
+      setImage(plant.image || "");
+      setLastWateredAt(plant.lastWateredAt?.slice(0, 10) || "" || "");
+      setWaterFrequency(plant.waterFrequency || 3);
+      setReminderEnabled(plant.reminderEnabled || true);
+      setReminderTime(plant.reminderTime?.slice(0, 10) || "");
+      setNextWateringDate(plant.nextWateringDate?.slice(0, 10) || "");
+    }
+  }, [plant]);
 
   const handleInputNameChange = (e) => setName(e.target.value);
 
@@ -29,106 +76,84 @@ const CreatePlant = () => {
 
   const handleLastWateredAtChange = (e) => setLastWateredAt(e.target.value);
 
-  const handleWaterFrequencyChange = (e) =>  setWaterFrequency(Number(e.target.value));
-  
+  const handleWaterFrequencyChange = (e) => setWaterFrequency(e.target.value);
 
   const handleReminderEnabledChange = (e) =>
     setReminderEnabled(e.target.checked);
 
   const handleReminderTimeChange = (e) => setReminderTime(e.target.value);
 
-  // const handleNextWateringDateChange = (e) =>
-  //   setNextWateringDate(e.target.value);
+  const handleNextWateringDateChange = (e) =>
+    setNextWateringDate(e.target.value);
 
   const {
-    mutate: createPlant,
-    isError,
-    isPending,
-    error,
+    mutate: editPlant,
+    isPending: isEditing,
+    isError: isEditingError,
+    error: editError,
   } = useMutation({
-    mutationFn: async ({
-      name,
-      image,
-      lastWateredAt,
-      reminderEnabled,
-      waterFrequency,
-      
-    }) => {
+    mutationFn: async ({ plantId, data }) => {
       try {
-        const res = await fetch("/api/plant/create-plant", {
+        const res = await fetch(`/api/plant/edit/${plantId}`, {
           method: "POST",
           credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name,
-            image,
-            lastWateredAt,
-            reminderEnabled,
-            waterFrequency
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
         });
-
-        const data = await res.json();
+        const response = await res.json();
         if (!res.ok) {
-          throw new Error(data.error || "Something went wrong!");
+          throw new Error(response.error || "Something went wrong!");
         }
-        return data;
+        return response;
       } catch (error) {
         console.error(error);
         throw error;
       }
     },
-    onSuccess: (data) => {
-      toast.success("Plant created successfully.");
-      setName("");
-      setImage("");
-      setReminderEnabled(true);
-      setReminderTime("");
-      setLastWateredAt("");
-      navigate("/");
-      queryClient.setQueryData(["allPlants"], (oldData) => {
-        if (!oldData) return { plants: [data.newPlant] };
-        return {
-          ...oldData,
-          plants: [data.newPlant, ...oldData.plants],
-        };
+    onSuccess: (plantId) => {
+      queryClient.invalidateQueries({ queryKey: ["allPlants"] });
+      queryClient.setQueryData(["allPlants"],(oldData)=>{
+       return {
+        ...oldData,
+        plants: oldData.plants.map((plant)=>{
+          if(plant._id === plantId){
+            return{
+              ...plant,
+              name,
+              image,
+              lastWateredAt,
+              waterFrequency,
+              reminderEnabled,
+              reminderTime,
+              nextWateringDate
+            }
+          }
+          return plant;
+        })
+       }
       });
-    },
-    onError: () => {
-      toast.error("Plant creation failed.");
+      toast.success("Plant edited successfully!");
+      navigate("/");
     },
   });
 
+  const handleEdit = (plantId, data ) => {
+    editPlant({plantId, data});
+  };
   const handleFormSubmit = (e) => {
     e.preventDefault();
     try {
-      const payload = {
+      const data = {
         name,
         image,
         lastWateredAt,
+        waterFrequency,
         reminderEnabled,
+        reminderTime,
+        nextWateringDate,
       };
-
-      if (waterFrequency) {
-        console.log(waterFrequency);
-        payload.waterFrequency = waterFrequency;
-      }
-      if (reminderTime) {
-        payload.reminderTime = reminderTime;
-      }
-
-      // if (new Date(nextWateringDate) <= new Date()) {
-      //   toast.error("Next watering date must be today or in the future.");
-      //   return;
-      // }
-
-      // if (nextWateringDate) {
-      //   payload.nextWateringDate = nextWateringDate;
-      // }
-console.log(payload)
-      createPlant(payload);
+      handleEdit(plantId, data);
+      
     } catch (error) {
       console.log(error);
     }
@@ -141,7 +166,9 @@ console.log(payload)
       >
         <div className="flex flex-col justify-center items-center p-5">
           <h1 className="text-5xl font-caveat-brush ">Add your Plant</h1>
-          {isError && <p className="text-red-500">{error.message}</p>}
+          {isEditingError && (
+            <p className="text-red-500">{editError.message}</p>
+          )}
           <div className="w-full flex flex-col">
             <label htmlFor="name">Name: </label>
             <input
@@ -201,7 +228,7 @@ console.log(payload)
               placeholder="Enter "
               id="reminderEnabled"
               name="reminderEnabled"
-              value={reminderEnabled}
+              checked={reminderEnabled}
               onChange={handleReminderEnabledChange}
             />
           </div>
@@ -217,7 +244,7 @@ console.log(payload)
               onChange={handleReminderTimeChange}
             />
           </div>
-          {/* <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full">
             <label className="w-full" htmlFor="nextWateringDate">
               Next Watering Date:{" "}
             </label>
@@ -229,14 +256,11 @@ console.log(payload)
               name="nextWateringDate"
               value={nextWateringDate}
               onChange={handleNextWateringDateChange}
-              min={new Date().toISOString().split("T")[0]}
             />
-          </div> */}
+          </div>
 
-
-
-          <button type="submit" disabled={isPending}>
-            {isPending ? "Adding Plant..." : "Add Plant"}
+          <button disabled={isEditing}>
+            {isEditing ? "Editing..." : "Edit Plant"}
           </button>
         </div>
       </form>
@@ -244,4 +268,4 @@ console.log(payload)
   );
 };
 
-export default CreatePlant;
+export default EditPlant;

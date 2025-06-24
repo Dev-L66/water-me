@@ -7,23 +7,21 @@ import cron from "node-cron";
 //create plant
 export const createPlant = async (req, res) => {
   try {
-    const {
-      name,
-      lastWateredAt,
-      waterFrequency,
-      reminderEnabled,
-      reminderTime,
-    } = req.body;
-    let { image, nextWateringDate } = req.body;
+    const { name, lastWateredAt, waterFrequency, reminderEnabled } = req.body;
+    let { image } = req.body;
     const userId = req.userId;
     const user = await User.findById(userId).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
-    if (!name ) {
+    if (!name || !image) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
+    const existingName = await Plant.findOne({ name, user: userId });
+    if (existingName) {
+      return res.status(400).json({ error: "Plant name already exists." });
+    }
     if (image) {
       try {
         const uploadedResponse = await cloudinary.uploader.upload(image);
@@ -34,15 +32,21 @@ export const createPlant = async (req, res) => {
       }
     }
 
-   
+    if (lastWateredAt > Date.now()) {
+      return res
+        .status(400)
+        .json({ error: "Last watered date must be in the past." });
+    }
+if (waterFrequency < 1) {
+  return res.status(400).json({ error: "Water frequency must be at least 1 day." });
+}
+    
     const newPlant = await Plant.create({
       name,
       image,
       lastWateredAt,
       waterFrequency,
       reminderEnabled,
-      reminderTime,
-      nextWateringDate,
       user: userId,
     });
     await Plant.populate(newPlant, { path: "user", select: "-password" });
@@ -152,7 +156,7 @@ export const deletePlant = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
     const plant = await Plant.findById(plantId);
-    
+
     if (!plant) {
       return res.status(404).json({ error: "Plant not found." });
     }
@@ -160,13 +164,13 @@ export const deletePlant = async (req, res) => {
       console.log(plant.user._id.toString(), userId);
       return res.status(401).json({ error: "Unauthorized. Access denied." });
     }
-    const deletePlant = await Plant.findByIdAndDelete(plantId);
-    if (!deletePlant) {
+    const deletedPlant = await Plant.findByIdAndDelete(plantId);
+    if (!deletedPlant) {
       return res.status(404).json({ error: "Plant not found." });
     }
     return res
       .status(201)
-      .json({ message: "Plant deleted successfully.", deletePlant });
+      .json({ message: "Plant deleted successfully.", deletedPlant });
   } catch (error) {
     console.log(`Error in deletePlant controller: ${error}`);
     return res.status(500).json({ error: "Internal Server Error." });
@@ -185,12 +189,19 @@ export const confirmWatering = async (req, res) => {
         .status(404)
         .json({ error: "Plant not found or unauthorized, access denied." });
     }
-    
+
+    const now = new Date();
+
+    if (plant.nextWateringDate > now) {
+      return res
+        .status(400)
+        .json({ error: "It's not time to water this plant yet." });
+    }
+
     const newReminderTime = new Date();
     newReminderTime.setDate(newReminderTime.getDate() + plant.waterFrequency);
     const updatePlant = await Plant.findByIdAndUpdate(plantId, {
       lastWateredAt: new Date(),
-      reminderTime: newReminderTime,
       nextWateringDate: newReminderTime,
       watered: true,
     });
@@ -200,21 +211,22 @@ export const confirmWatering = async (req, res) => {
     }
     return res
       .status(201)
-      .json({ message: "Watering confirmed successfully.", updatePlant });
+      .json({ message: "Plant watered successfully.", updatePlant });
   } catch (error) {
     console.log(`Error in confirmWatering controller: ${error}`);
     return res.status(500).json({ error: "Internal Server Error." });
   }
 };
 
-
 //schedule reminders
-cron.schedule("* * * * *", async () => {
+const job =cron.schedule("0 9 * * *", async () => {
   const now = new Date();
+  const today = now.toDateString();
   try {
     const plantsToRemind = await Plant.find({
       reminderEnabled: true,
-      reminderTime: { $lte: now },
+      nextWateringDate: { $lte: now },
+      lastReminderSentDate:{$ne : today}
     })
       .populate("user")
       .select("-password");
@@ -223,16 +235,18 @@ cron.schedule("* * * * *", async () => {
     }
     plantsToRemind.forEach(async (plant) => {
       try {
-        await sendReminderMail(plant.user.email, plant.name);
+        
         const newReminderTime = new Date();
         newReminderTime.setDate(
           newReminderTime.getDate() + plant.waterFrequency
         );
-        console.log(newReminderTime);
+
         await Plant.findByIdAndUpdate(plant._id, {
-          reminderTime: newReminderTime,
+          nextWateringDate: newReminderTime,
           watered: false,
+          lastReminderSentDate: today
         });
+        await sendReminderMail(plant.user.email, plant.name);
       } catch (error) {
         console.log(`Error in sending reminder:${error}`);
       }
@@ -240,4 +254,6 @@ cron.schedule("* * * * *", async () => {
   } catch (error) {
     console.log(`Error in cron-job:${error}`);
   }
-});
+}, {scheduled: false});
+
+job.start();

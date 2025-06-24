@@ -10,7 +10,7 @@ router.post('/create-plant', protectedRoute,createPlant);
 router.get('/water/:plantId', protectedRoute, confirmWatering);
 router.get('/all-plants', protectedRoute,getAllPlants);
 router.get('/:plantId', protectedRoute, getPlant);
-router.post('/:plantId', protectedRoute, updatePlant);
+router.post('/edit/:plantId', protectedRoute, updatePlant);
 router.delete('/delete/:plantId', protectedRoute, deletePlant);
 
 

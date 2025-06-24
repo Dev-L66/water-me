@@ -26,7 +26,7 @@ const plantSchema = new mongoose.Schema(
     },
     reminderTime: {
       type: Date,
-      default: new Date(),
+      default: () => new Date(),
     },
     nextWateringDate: {
       type: Date,
@@ -41,7 +41,7 @@ const plantSchema = new mongoose.Schema(
       ref: "user",
     },
   },
-  { timestamps: true, strict: true }
+  { timestamps: true, strict: "throw" }
 );
 
 plantSchema.pre("save", function (next) {

@@ -6,6 +6,7 @@ import { useQuery} from "@tanstack/react-query";
 import HomePage from "./pages/HomePage";
 import Navbar from "./components/common/Navbar";
 import CreatePlant from "./pages/CreatePlant";
+import EditPlant from "./pages/EditPlant";
 
 const App = () => {
 
@@ -46,6 +47,7 @@ const App = () => {
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/create-plant" element={authUser ? <CreatePlant /> : <Navigate to="/login" />} />
+          <Route path={`/edit-plant/:plantId`} element={authUser ? <EditPlant /> : <Navigate to="/login" />} />
         </Routes>
       <Toaster />
     </div>
