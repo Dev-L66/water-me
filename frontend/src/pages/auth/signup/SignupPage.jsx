@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "motion/react";
-import { useState } from "react";
-import { Link } from "react-router";
+import {  useState } from "react";
+import { Link, useNavigate } from "react-router";
 import { toast } from "react-hot-toast";
+import { signupValidation } from "../../../../../backend/utils/lib/inputValidation/inputValidation";
+import {z} from "zod/v4";
 const SignupPage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -10,9 +12,10 @@ const SignupPage = () => {
     email: "",
     password: "",
   });
-
+  const navigate = useNavigate();
+const [errors, setErrors] = useState({});
   const queryClient = useQueryClient();
-  const { mutate, data, error, isError, isPending } = useMutation({
+  const { mutate:signup,  error, isError, isPending } = useMutation({
     mutationFn: async ({ name, username, email, password }) => {
       try {
         const res = await fetch("/api/auth/signup", {
@@ -30,20 +33,29 @@ const SignupPage = () => {
         }
         return data;
       } catch (error) {
-        console.log(error);
+        console.error(error);
         throw error;
       }
-    },
+    }, 
     onSuccess: () => {
       toast.success("Signup successful.");
+      navigate('/verify-email');
     },
-    onError: () => {
-      toast.error(`Signup failed.`);
+    onError: () => { 
+      toast.error("Signup failed");
     },
   });
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    mutate(formData);
+    const result = signupValidation.safeParse(formData);
+    if (!result.success) {
+      const tree = z.treeifyError(result.error);
+      setErrors(tree);
+     
+      return;
+    }
+    signup(formData);
+    setErrors({});
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,9 +80,12 @@ const SignupPage = () => {
             />
           </div>
         </motion.figure>
-       
-        <form className="w-[100%] md:w-[50%] container mx-auto p-2" onSubmit={handleFormSubmit}>
-           <div className="flex bg-transparent p-5">
+
+        <form
+          className="w-[100%] md:w-[50%] container mx-auto p-2"
+          onSubmit={handleFormSubmit}
+        >
+          <div className="flex bg-transparent p-5">
             <motion.h1
               initial={{ opacity: 0, x: -100 }}
               animate={{ opacity: 1, x: 0 }}
@@ -80,16 +95,14 @@ const SignupPage = () => {
               Water Your Plants.
             </motion.h1>
           </div>
-          <motion.div
-            initial={{ opacity: 0, x: -100 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 1.25, ease: "easeInOut" }}
+          <div
+            
             className="bg-transparent font-caveat-brush flex flex-col justify-center items-center gap-2 p-2 text-lg "
           >
-            <div className="flex flex-col justify-between items-center gap-2 ">
+            <div className="w-full flex flex-col justify-between items-center gap-2 ">
               <label htmlFor="name">Name:</label>
               <input
-                className="bg-transparent focus:outline-none "
+                className="bg-transparent focus:outline-none w-[80%] md:w-[60%]  p-1 "
                 placeholder="Enter your name here."
                 type="text"
                 name="name"
@@ -97,13 +110,22 @@ const SignupPage = () => {
                 required
                 value={formData.name}
                 onChange={handleInputChange}
+                minLength={3}
+                maxLength={30}
               />
+             
+              {errors.properties?.name?.errors?.length > 0 && (
+  <p className="text-red-500 text-xs font-roboto">
+    {errors.properties.name.errors[0]}
+  </p>
+)}
+
             </div>
 
-            <div className="flex flex-col justify-between items-center gap-2 ">
+            <div className="flex w-full flex-col justify-between items-center gap-2 ">
               <label htmlFor="username">Username:</label>
               <input
-                className="bg-transparent focus:outline-none "
+                 className="bg-transparent focus:outline-none w-[80%] md:w-[60%] p-1  "
                 placeholder="Enter your username here."
                 type="text"
                 name="username"
@@ -111,26 +133,42 @@ const SignupPage = () => {
                 required
                 value={formData.username}
                 onChange={handleInputChange}
+                minLength={3}
+                maxLength={30}
               />
+              {errors.properties?.username?.errors?.length > 0 && (
+  <p className="text-red-500 text-xs font-roboto">
+    {errors.properties.username.errors[0]}
+  </p>
+)}
             </div>
 
-            <div className="flex flex-col justify-between items-center gap-2">
+            <div className="flex w-full flex-col justify-between items-center gap-2">
               <label htmlFor="email">email:</label>
               <input
-                className="bg-transparent focus:outline-none w-full "
+                 className="bg-transparent focus:outline-none w-[80%] md:w-[60%]  p-1  "
                 placeholder="Enter your email here."
                 type="email"
                 name="email"
                 id="email"
                 value={formData.email}
                 onChange={handleInputChange}
+                required
+                minLength={3}
+                maxLength={50}
               />
+              
+            {errors.properties?.email?.errors?.length > 0 && (
+  <p className="text-red-500 text-xs font-roboto">
+    {errors.properties.email.errors[0]}
+  </p>
+)}
             </div>
 
-            <div className="flex flex-col justify-between items-center gap-2">
+            <div className="flex w-full flex-col justify-between items-center gap-2">
               <label htmlFor="password">Password:</label>
               <input
-                className="bg-transparent focus:outline-none w-full "
+                 className="bg-transparent focus:outline-none w-[80%] md:w-[60%]  p-1  "
                 placeholder="Enter your password here."
                 type="password"
                 name="password"
@@ -138,8 +176,17 @@ const SignupPage = () => {
                 required
                 value={formData.password}
                 onChange={handleInputChange}
+                minLength={8}
+                maxLength={30}
+                
               />
+               {errors.properties?.password?.errors?.length > 0 && (
+  <p className="text-red-500 text-xs font-roboto">
+    {errors.properties.password.errors[0]}
+  </p>
+)}
             </div>
+
             <div className="flex flex-col justify-between items-center gap-2">
               <Link to="/login">Already have an account? Login.</Link>
               <button
@@ -149,10 +196,11 @@ const SignupPage = () => {
                 {isPending ? "Signing up..." : "Signup"}
               </button>
             </div>
-          </motion.div>
+          </div>
           <div className="flex justify-center items-center">
-            <p className="text-red-500 font-bold ">
+            <p className="text-red-500 text-sm font bold flex justify-center ">
               {isError ? error.message : ""}
+              
             </p>
           </div>
         </form>

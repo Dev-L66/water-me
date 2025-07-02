@@ -3,11 +3,15 @@ import { Plant } from "../models/plant.model.js";
 import { User } from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import cron from "node-cron";
+import {
+  createPlantValidation,
+} from "../utils/lib/inputValidation/inputValidation.js";
+import { z } from "zod/v4";
 
 //create plant
 export const createPlant = async (req, res) => {
   try {
-    const { name, lastWateredAt, waterFrequency, reminderEnabled } = req.body;
+    const { name, lastWateredAt, waterFrequency, reminderEnabled } = createPlantValidation.parse(req.body);
     let { image } = req.body;
     const userId = req.userId;
     const user = await User.findById(userId).select("-password");
@@ -54,6 +58,9 @@ if (waterFrequency < 1) {
       .status(201)
       .json({ message: "Plant created successfully.", newPlant });
   } catch (error) {
+    if(error instanceof z.ZodError){
+         return res.status(400).json({errors: error.issues.map((error) => ({path: error.path[0], message: error.message}))});
+    }
     console.error(`Error in createPlant controller: ${error}`);
     return res.status(500).json({ error: "Internal Server Error." });
   }
@@ -132,7 +139,14 @@ export const updatePlant = async (req, res) => {
     if (plant.user.toString() !== userId) {
       return res.status(401).json({ error: "Unauthorized. Access denied." });
     }
-    const updatedPlant = await Plant.findByIdAndUpdate(plantId, req.body);
+    const { name, image, lastWateredAt, waterFrequency, reminderEnabled } = createPlantValidation.parse(req.body);
+    const updatedPlant = await Plant.findByIdAndUpdate(plantId, {
+      name,
+      image,
+      lastWateredAt,
+      waterFrequency,
+      reminderEnabled,
+    });
 
     if (!updatedPlant) {
       return res.status(404).json({ error: "Plant not found." });
@@ -141,6 +155,9 @@ export const updatePlant = async (req, res) => {
       .status(201)
       .json({ message: "Plant updated successfully.", updatedPlant });
   } catch (error) {
+    if(error instanceof z.ZodError){
+      return res.status(400).json({errors: error.issues.map((error) => ({path: error.path[0], message: error.message}))});
+    }
     console.error(`Error in updatePlant controller: ${error}`);
     return res.status(500).json({ error: "Internal Server Error." });
   }

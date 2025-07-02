@@ -2,7 +2,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useNavigate } from "react-router";
-import {motion} from "motion/react";
+import { createPlantValidation } from "../../../backend/utils/lib/inputValidation/inputValidation";
+import { z } from "zod/v4";
 const CreatePlant = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -11,9 +12,8 @@ const CreatePlant = () => {
   const [lastWateredAt, setLastWateredAt] = useState("");
   const [waterFrequency, setWaterFrequency] = useState(3);
   const [reminderEnabled, setReminderEnabled] = useState(true);
-  const [reminderTime, setReminderTime] = useState("");
-  // const [nextWateringDate, setNextWateringDate] = useState("");
 
+  const [errors, setErrors] = useState({});
   const handleInputNameChange = (e) => setName(e.target.value);
 
   const handleImageChange = (e) => {
@@ -29,16 +29,11 @@ const CreatePlant = () => {
 
   const handleLastWateredAtChange = (e) => setLastWateredAt(e.target.value);
 
-  const handleWaterFrequencyChange = (e) =>  setWaterFrequency(Number(e.target.value));
-  
+  const handleWaterFrequencyChange = (e) =>
+    setWaterFrequency(Number(e.target.value));
 
   const handleReminderEnabledChange = (e) =>
     setReminderEnabled(e.target.checked);
-
-  const handleReminderTimeChange = (e) => setReminderTime(e.target.value);
-
-  // const handleNextWateringDateChange = (e) =>
-  //   setNextWateringDate(e.target.value);
 
   const {
     mutate: createPlant,
@@ -52,7 +47,6 @@ const CreatePlant = () => {
       lastWateredAt,
       reminderEnabled,
       waterFrequency,
-      
     }) => {
       try {
         const res = await fetch("/api/plant/create-plant", {
@@ -66,7 +60,7 @@ const CreatePlant = () => {
             image,
             lastWateredAt,
             reminderEnabled,
-            waterFrequency
+            waterFrequency,
           }),
         });
 
@@ -85,7 +79,6 @@ const CreatePlant = () => {
       setName("");
       setImage("");
       setReminderEnabled(true);
-      setReminderTime("");
       setLastWateredAt("");
       navigate("/");
       queryClient.setQueryData(["allPlants"], (oldData) => {
@@ -115,20 +108,15 @@ const CreatePlant = () => {
         console.log(waterFrequency);
         payload.waterFrequency = waterFrequency;
       }
-      if (reminderTime) {
-        payload.reminderTime = reminderTime;
+
+      const result = createPlantValidation.safeParse(payload);
+      if (!result.success) {
+        const tree = z.treeifyError(result.error);
+        setErrors(tree);
+        return;
       }
-
-      // if (new Date(nextWateringDate) <= new Date()) {
-      //   toast.error("Next watering date must be today or in the future.");
-      //   return;
-      // }
-
-      // if (nextWateringDate) {
-      //   payload.nextWateringDate = nextWateringDate;
-      // }
-console.log(payload)
       createPlant(payload);
+      setErrors({});
     } catch (error) {
       console.log(error);
     }
@@ -152,7 +140,15 @@ console.log(payload)
               name="name"
               value={name}
               onChange={handleInputNameChange}
+              required
+              maxLength={30}
+              minLength={3}
             />
+            {errors.properties?.name?.errors?.length > 0 && (
+              <p className="text-red-500 text-xs font-roboto">
+                {errors.properties.name.errors[0]}
+              </p>
+            )}
           </div>
           <div className="flex flex-col w-full">
             <label htmlFor="image">Image: </label>
@@ -163,7 +159,13 @@ console.log(payload)
               name="image"
               accept="image/*"
               onChange={handleImageChange}
+              required
             />
+            {errors.properties?.image?.errors?.length > 0 && (
+              <p className="text-red-500 text-xs font-roboto">
+                {errors.properties.image.errors[0]}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col w-full">
@@ -177,6 +179,11 @@ console.log(payload)
               value={lastWateredAt}
               onChange={handleLastWateredAtChange}
             />
+            {errors.properties?.lastWateredAt?.errors?.length > 0 && (
+              <p className="text-red-500 text-xs font-roboto">
+                {errors.lastWateredAt.name.errors[0]}
+              </p>
+            )}
           </div>
           <div className="flex flex-col w-full">
             <label className="w-full" htmlFor="waterFrequency">
@@ -191,49 +198,44 @@ console.log(payload)
               value={waterFrequency}
               onChange={handleWaterFrequencyChange}
             />
+            {errors.properties?.waterFrequency?.errors?.length > 0 && (
+              <p className="text-red-500 text-xs font-roboto">
+                {errors.properties.waterFrequency.errors[0]}
+              </p>
+            )}
           </div>
 
-          <div className="flex w-full">
+          <div className="w-full flex gap-2 p-1">
             <label htmlFor="reminderEnabled">Reminder Enabled:</label>
             <input
               type="checkbox"
-              className="rounded-md h-10 focus:outline-none bg-green-300 p-2"
+              className="rounded-full hidden focus:outline-none p-2"
               placeholder="Enter "
               id="reminderEnabled"
               name="reminderEnabled"
-              value={reminderEnabled}
+              checked={reminderEnabled}
               onChange={handleReminderEnabledChange}
             />
+            <div
+              className={`${
+                reminderEnabled ? "bg-green-900" : "bg-red-900"
+              } h-5 w-10  rounded-full`}
+              onClick={() => setReminderEnabled(!reminderEnabled)}
+            >
+              <div
+                className={`${
+                  reminderEnabled
+                    ? "bg-green-900 transition-transform delay-100 translate-x-5"
+                    : "transition-transform delay-100 translate-x-0 bg-red-900"
+                } rounded-full h-5 w-5 border-2  bg-white`}
+              ></div>
+            </div>
+            {errors.properties?.reminderEnabled?.errors?.length > 0 && (
+              <p className="text-red-500 text-xs font-roboto">
+                {errors.properties.reminderEnabled.errors[0]}
+              </p>
+            )}
           </div>
-          <div className="flex flex-col w-full">
-            <label htmlFor="reminderTime">Reminder Date: </label>
-            <input
-              type="date"
-              className="rounded-md h-10 focus:outline-none bg-green-300 p-2"
-              placeholder="Enter "
-              id="reminderTime"
-              name="reminderTime"
-              value={reminderTime}
-              onChange={handleReminderTimeChange}
-            />
-          </div>
-          {/* <div className="flex flex-col w-full">
-            <label className="w-full" htmlFor="nextWateringDate">
-              Next Watering Date:{" "}
-            </label>
-            <input
-              type="date"
-              className="rounded-md h-10 focus:outline-none bg-green-300 p-2"
-              placeholder="Enter next watering date"
-              id="nextWateringDate"
-              name="nextWateringDate"
-              value={nextWateringDate}
-              onChange={handleNextWateringDateChange}
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div> */}
-
-
 
           <button type="submit" disabled={isPending}>
             {isPending ? "Adding Plant..." : "Add Plant"}

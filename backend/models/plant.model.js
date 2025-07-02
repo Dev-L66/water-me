@@ -24,17 +24,13 @@ const plantSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
-    reminderTime: {
-      type: Date,
-      default: () => new Date(),
-    },
+
     nextWateringDate: {
       type: Date,
-    
     },
-    watered:{
+    watered: {
       type: Boolean,
-      default: false
+      default: false,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,6 +50,5 @@ plantSchema.pre("save", function (next) {
   }
   next();
 });
-
 
 export const Plant = mongoose.model("plant", plantSchema);

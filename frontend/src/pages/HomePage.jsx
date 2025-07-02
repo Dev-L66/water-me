@@ -148,7 +148,7 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, [allPlants?.plants.map((plant) => plant?.nextWateringDate)]);
   return (
-    <div className="flex flex-col items-center justify-center ">
+    <div className="flex flex-col items-center justify-center p-5">
       {!isLoading && (
         <motion.h1
           initial={{ opacity: 0, x: -100 }}
@@ -174,7 +174,7 @@ const HomePage = () => {
             {allPlants.plants?.map((plant) => (
               <motion.div
                 key={plant._id}
-                className="flex flex-col justify-center items-center bg-green-300 rounded-xl gap-2 w-90 p-2"
+                className="flex flex-col  justify-center items-center bg-green-300 rounded-xl gap-2 w-100 p-2"
               >
                 <motion.div
                   initial={{ opacity: 1, y: -50 }}
@@ -190,10 +190,10 @@ const HomePage = () => {
                 <img
                   src={plant?.image}
                   alt={plant?.name}
-                  className="w-full h-40 object-cover rounded-2xl "
+                  className="w-full h-70 object-cover rounded-2xl "
                 />
 
-                <p className=" text-3xl font-bold ">
+                <p className="truncate break-words text-xl flex  justify-center items-center font-bold overflow-hidden">
                   {plant?.name.toUpperCase()}
                 </p>
                 <p>
@@ -211,10 +211,7 @@ const HomePage = () => {
                       {plant?.nextWateringDate
                         ? new Date(plant.nextWateringDate).toLocaleDateString()
                         : "Not set"}
-                      {/* {plant?.nextWateringDate &&
-  new Date(plant.nextWateringDate).getTime() < Date.now()
-    ? "Date should be in the future"
-    : ""} */}
+                    
                     </span>
                   </p>
                   <p>Time for next watering:</p>
@@ -231,10 +228,14 @@ const HomePage = () => {
                 <p>
                   Water Status:{" "}
                   <span className="font-bold">
-                    {plant?.watered === false &&
-                    plant?.nextWateringDate <= new Date()
-                      ? "Due"
-                      : "Watered"}
+                 {
+  new Date(plant?.nextWateringDate) <= new Date()
+    ? (plant?.watered === false ? "Due" : "Watered (Overdue)")
+    : "Watered"
+}
+
+
+                   
                   </span>
                 </p>
                 <div className="flex justify-center items-center gap-2">
